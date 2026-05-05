@@ -1,32 +1,10 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
-
-interface Todo {
-  id: string;
-  text: string;
-  note: string;
-  completed: boolean;
-  createdAt: number;
-  completedAt?: number;
-}
+import { useState, useRef, useCallback } from "react";
+import { useTodos } from "@/hooks/useTodos";
+import type { Todo } from "@/hooks/useTodos";
 
 type Filter = "all" | "active" | "completed";
-
-function uid() {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-}
-
-function load(): Todo[] {
-  if (typeof window === "undefined") return [];
-  try {
-    return JSON.parse(localStorage.getItem("todo-flow-v2") || "[]");
-  } catch { return []; }
-}
-
-function save(todos: Todo[]) {
-  localStorage.setItem("todo-flow-v2", JSON.stringify(todos));
-}
 
 function formatDate(ts: number) {
   return new Date(ts).toLocaleDateString("zh-CN", {
@@ -35,38 +13,30 @@ function formatDate(ts: number) {
 }
 
 export default function TodoApp() {
-  const [todos, setTodos] = useState<Todo[]>([]);
+  const { todos, ready, add, toggle, del, updateText, updateNote, clearCompleted } = useTodos();
   const [input, setInput] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
   const [editId, setEditId] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
   const [noteId, setNoteId] = useState<string | null>(null);
   const [noteText, setNoteText] = useState("");
-  const [ready, setReady] = useState(false);
   const [confetti, setConfetti] = useState<{ id: number; x: number; y: number }[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const editRef = useRef<HTMLInputElement>(null);
   const noteRef = useRef<HTMLTextAreaElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => { setTodos(load()); setReady(true); }, []);
-  useEffect(() => { if (ready) save(todos); }, [todos, ready]);
-  useEffect(() => { if (editId) { editRef.current?.focus(); editRef.current?.select(); } }, [editId]);
-  useEffect(() => { if (noteId) noteRef.current?.focus(); }, [noteId]);
-
-  const add = useCallback(() => {
-    const t = input.trim();
-    if (!t) return;
-    setTodos(p => [{ id: uid(), text: t, note: "", completed: false, createdAt: Date.now() }, ...p]);
+  const handleAdd = useCallback(() => {
+    add(input);
     setInput("");
     inputRef.current?.focus();
-  }, [input]);
+  }, [input, add]);
 
-  const toggle = useCallback((id: string) => {
-    setTodos(p => p.map(t => t.id === id ? { ...t, completed: !t.completed, completedAt: !t.completed ? Date.now() : undefined } : t));
+  const handleToggle = useCallback((id: string) => {
     const todo = todos.find(t => t.id === id);
-    if (todo && !todo.completed) {
-      // spawn confetti on completion
+    if (!todo) return;
+    toggle(id, todo.completed);
+    if (!todo.completed) {
       const el = listRef.current?.querySelector(`[data-id="${id}"]`);
       if (el) {
         const rect = el.getBoundingClientRect();
@@ -81,25 +51,25 @@ export default function TodoApp() {
         setTimeout(() => setConfetti([]), 1000);
       }
     }
-  }, [todos]);
+  }, [todos, toggle]);
 
-  const del = useCallback((id: string) => { setTodos(p => p.filter(t => t.id !== id)); }, []);
+  const handleDelete = useCallback((id: string) => {
+    del(id);
+  }, [del]);
 
   const startEdit = useCallback((t: Todo) => { setEditId(t.id); setEditText(t.text); }, []);
   const saveEdit = useCallback(() => {
     if (!editId) return;
-    const t = editText.trim();
-    if (!t) return;
-    setTodos(p => p.map(todo => todo.id === editId ? { ...todo, text: t } : todo));
+    updateText(editId, editText);
     setEditId(null);
-  }, [editId, editText]);
+  }, [editId, editText, updateText]);
 
   const openNote = useCallback((t: Todo) => { setNoteId(t.id); setNoteText(t.note); }, []);
   const saveNote = useCallback(() => {
     if (!noteId) return;
-    setTodos(p => p.map(t => t.id === noteId ? { ...t, note: noteText } : t));
+    updateNote(noteId, noteText);
     setNoteId(null);
-  }, [noteId, noteText]);
+  }, [noteId, noteText, updateNote]);
 
   const filtered = todos.filter(t => {
     if (filter === "active") return !t.completed;
@@ -182,20 +152,20 @@ export default function TodoApp() {
                   ref={inputRef}
                   value={input}
                   onChange={e => setInput(e.target.value)}
-                  onKeyDown={e => e.key === "Enter" && add()}
+                  onKeyDown={e => e.key === "Enter" && handleAdd()}
                   placeholder="添加新的待办事项..."
                   className="w-full neon-input rounded-xl px-4 py-3 md:py-3.5 text-text placeholder:text-text-muted/50 outline-none text-[15px]"
                 />
                 {/* Decorative corner accents */}
-                <div className="absolute top-0 left-0 w-3 h-3 border-t border-l border-accent/30 rounded-tl-xl opacity-0 group-focus-within:opacity-100 transition-opacity" />
-                <div className="absolute bottom-0 right-0 w-3 h-3 border-b border-r border-accent/30 rounded-br-xl opacity-0 group-focus-within:opacity-100 transition-opacity" />
+                <div className="absolute top-0 left-0 w-3 h-3 border-t border-l border-accent/30 opacity-0 group-focus-within:opacity-100 transition-opacity" />
+                <div className="absolute bottom-0 right-0 w-3 h-3 border-b border-r border-accent/30 opacity-0 group-focus-within:opacity-100 transition-opacity" />
                 {input && (
                   <button onClick={() => setInput("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text transition-colors">
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
                   </button>
                 )}
               </div>
-              <button onClick={add} disabled={!input.trim()} className="neon-btn rounded-xl px-5 py-3 md:py-3.5 text-white font-medium flex items-center gap-2">
+              <button onClick={handleAdd} disabled={!input.trim()} className="neon-btn rounded-xl px-5 py-3 md:py-3.5 text-white font-medium flex items-center gap-2">
                 <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 3v12M3 9h12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
                 <span className="hidden md:inline text-sm">添加</span>
               </button>
@@ -255,7 +225,7 @@ export default function TodoApp() {
                     >
                       <div className="flex items-start gap-3 md:gap-4">
                         {/* Checkbox */}
-                        <button onClick={() => toggle(todo.id)}
+                        <button onClick={() => handleToggle(todo.id)}
                           className={`todo-check mt-1 md:mt-1.5 flex items-center justify-center ${todo.completed ? "checked" : ""}`}
                         >
                           {todo.completed && (
@@ -311,7 +281,7 @@ export default function TodoApp() {
                             </svg>
                           </button>
                           {/* PC: inline delete button */}
-                          <button onClick={() => del(todo.id)}
+                          <button onClick={() => handleDelete(todo.id)}
                             className="p-1.5 md:p-2 rounded-lg text-text-muted hover:text-red hover:bg-red/10 transition-all" title="删除">
                             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                               <path d="M3 4h10M6 4V3h4v1M5 4v9h6V4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -332,7 +302,7 @@ export default function TodoApp() {
             <div className="md:hidden fixed bottom-0 left-0 right-0 z-20">
               <div className="glass-card border-t border-border px-5 py-3 flex items-center justify-between animate-slide-up">
                 <span className="text-text-muted text-xs">{done} 项已完成</span>
-                <button onClick={() => setTodos(p => p.filter(t => !t.completed))}
+                <button onClick={() => clearCompleted()}
                   className="text-red text-xs font-medium hover:text-red/80 transition-colors active:scale-95">
                   清除已完成
                 </button>
@@ -344,7 +314,7 @@ export default function TodoApp() {
           {done > 0 && (
             <div className="hidden md:flex items-center justify-between pt-3 animate-fade-in">
               <span className="text-text-muted text-sm">{done} 项已完成</span>
-              <button onClick={() => setTodos(p => p.filter(t => !t.completed))}
+              <button onClick={() => clearCompleted()}
                 className="neon-btn !bg-gradient-to-r from-red to-red/80 rounded-lg px-4 py-2 text-white text-sm font-medium">
                 清除已完成
               </button>
