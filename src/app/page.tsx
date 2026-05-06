@@ -251,7 +251,7 @@ export default function TodoApp() {
                           )}
 
                           {todo.note && editId !== todo.id && (
-                            <p className="todo-note-preview text-text-muted text-xs md:text-sm mt-1.5 line-clamp-1">
+                            <p className="todo-note-preview text-text-muted text-xs md:text-sm mt-1.5 break-words">
                               {todo.note}
                             </p>
                           )}
