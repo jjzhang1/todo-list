@@ -265,27 +265,26 @@ export default function TodoApp() {
                         </div>
 
                         {/* Actions */}
-                        <div className="flex items-center gap-0.5 md:gap-1 flex-shrink-0 opacity-40 hover:opacity-100 transition-opacity">
+                        <div className="flex items-center gap-0.5 md:gap-1 flex-shrink-0">
                           <button onClick={() => openNote(todo)}
-                            className={`p-1.5 md:p-2 rounded-lg transition-all ${todo.note ? "text-accent-light hover:bg-accent-subtle" : "text-text-muted hover:text-text-dim hover:bg-surface-3"}`}
+                            className={`p-1.5 md:p-2 rounded-lg transition-all ${todo.note ? "text-accent hover:bg-accent-subtle" : "text-text-dim hover:text-accent hover:bg-accent-subtle"}`}
                             title="备注">
                             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                              <path d="M10 2H4a1 1 0 00-1 1v10a1 1 0 001 1h8a1 1 0 001-1V6l-3-4z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
-                              <path d="M10 2v4h3M6 9h4M6 11h2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                              <path d="M10 2H4a1 1 0 00-1 1v10a1 1 0 001 1h8a1 1 0 001-1V6l-3-4z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                              <path d="M10 2v4h3M6 9h4M6 11h2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                             </svg>
                           </button>
                           <button onClick={() => startEdit(todo)}
-                            className="p-1.5 md:p-2 rounded-lg text-text-muted hover:text-text-dim hover:bg-surface-3 transition-all" title="编辑">
+                            className="p-1.5 md:p-2 rounded-lg text-text-dim hover:text-accent hover:bg-accent-subtle transition-all" title="编辑">
                             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                              <path d="M11.5 1.5l3 3L5 14H2v-3L11.5 1.5z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                              <path d="M11.5 1.5l3 3L5 14H2v-3L11.5 1.5z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                             </svg>
                           </button>
-                          {/* PC: inline delete button */}
                           <button onClick={() => handleDelete(todo.id)}
-                            className="p-1.5 md:p-2 rounded-lg text-text-muted hover:text-red hover:bg-red/10 transition-all" title="删除">
+                            className="p-1.5 md:p-2 rounded-lg text-text-dim hover:text-red hover:bg-red/10 transition-all" title="删除">
                             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                              <path d="M3 4h10M6 4V3h4v1M5 4v9h6V4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
-                              <path d="M7 7v4M9 7v4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+                              <path d="M3 4h10M6 4V3h4v1M5 4v9h6V4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                              <path d="M7 7v4M9 7v4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                             </svg>
                           </button>
                         </div>
