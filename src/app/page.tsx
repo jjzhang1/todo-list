@@ -20,6 +20,7 @@ export default function TodoApp() {
   const [editText, setEditText] = useState("");
   const [noteId, setNoteId] = useState<string | null>(null);
   const [noteText, setNoteText] = useState("");
+  const [detailId, setDetailId] = useState<string | null>(null);
   const [confetti, setConfetti] = useState<{ id: number; x: number; y: number }[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const editRef = useRef<HTMLInputElement>(null);
@@ -83,6 +84,7 @@ export default function TodoApp() {
   const progress = total > 0 ? (done / total) * 100 : 0;
 
   const noteTodo = noteId ? todos.find(t => t.id === noteId) : null;
+  const detailTodo = detailId ? todos.find(t => t.id === detailId) : null;
 
   if (!ready) {
     return (
@@ -266,6 +268,13 @@ export default function TodoApp() {
 
                         {/* Actions */}
                         <div className="flex items-center gap-0.5 md:gap-1 flex-shrink-0">
+                          <button onClick={() => setDetailId(todo.id)}
+                            className="p-1.5 md:p-2 rounded-lg text-text-dim hover:text-accent hover:bg-accent-subtle transition-all" title="详情">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                              <path d="M8 3C4 3 1.5 8 1.5 8s2.5 5 6.5 5 6.5-5 6.5-5-2.5-5-6.5-5z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                              <circle cx="8" cy="8" r="2.5" stroke="currentColor" strokeWidth="1.5"/>
+                            </svg>
+                          </button>
                           <button onClick={() => openNote(todo)}
                             className={`p-1.5 md:p-2 rounded-lg transition-all ${todo.note ? "text-accent hover:bg-accent-subtle" : "text-text-dim hover:text-accent hover:bg-accent-subtle"}`}
                             title="备注">
@@ -321,6 +330,83 @@ export default function TodoApp() {
           )}
         </div>
       </div>
+
+      {/* Detail modal */}
+      {detailId && detailTodo && (
+        <div className="fixed inset-0 z-[60] flex flex-col bg-bg animate-fade-in overflow-y-auto">
+          {/* Header */}
+          <div className="sticky top-0 z-10 flex items-center justify-between px-5 md:px-8 py-4 bg-bg/80 backdrop-blur-md border-b border-border">
+            <h3 className="text-text font-semibold text-lg md:text-xl">任务详情</h3>
+            <button onClick={() => setDetailId(null)} className="p-2 -mr-2 text-text-muted hover:text-text transition-colors" title="关闭全屏">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+          </div>
+          
+          {/* Content */}
+          <div className="flex-1 p-5 md:p-8 md:max-w-3xl md:mx-auto w-full space-y-6 md:space-y-8">
+            <div>
+              <div className="text-text-muted text-sm md:text-base mb-2">任务名称</div>
+              <div className="text-text text-lg md:text-xl font-medium leading-relaxed bg-surface rounded-xl p-4 md:p-5 border border-border">
+                {detailTodo.text}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 md:gap-6">
+              <div>
+                <div className="text-text-muted text-sm md:text-base mb-2">负责人</div>
+                <div className="flex items-center gap-2 bg-surface rounded-xl p-4 md:p-5 border border-border">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-accent to-cyan flex items-center justify-center text-white font-medium text-sm shadow-sm">
+                    E
+                  </div>
+                  <span className="text-text font-medium">Eden</span>
+                </div>
+              </div>
+              <div>
+                <div className="text-text-muted text-sm md:text-base mb-2">任务状态</div>
+                <div className="flex items-center h-[66px] px-4 md:px-5 bg-surface rounded-xl border border-border">
+                  <div className={`px-3 py-1.5 rounded-lg text-sm font-medium ${detailTodo.completed ? "bg-green/10 text-green" : "bg-accent/10 text-accent"}`}>
+                    {detailTodo.completed ? "已完成" : "进行中"}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <div className="text-text-muted text-sm md:text-base mb-2">时间信息</div>
+              <div className="bg-surface rounded-xl p-4 md:p-5 border border-border space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-text-dim">创建时间</span>
+                  <span className="text-text font-mono">{formatDate(detailTodo.createdAt)}</span>
+                </div>
+                {detailTodo.completed && detailTodo.completedAt && (
+                  <>
+                    <div className="w-full h-px bg-border"></div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-text-dim">完成时间</span>
+                      <span className="text-text font-mono text-green">{formatDate(detailTodo.completedAt)}</span>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <div className="text-text-muted text-sm md:text-base mb-2">备注信息</div>
+              <div className="bg-surface rounded-xl p-4 md:p-5 border border-border min-h-[200px] whitespace-pre-wrap text-text leading-relaxed text-base">
+                {detailTodo.note ? detailTodo.note : <span className="text-text-dim italic">暂无备注内容...</span>}
+              </div>
+            </div>
+            
+            <div className="pt-4 pb-8 flex justify-center">
+               <button onClick={() => setDetailId(null)} className="neon-btn rounded-xl px-12 py-3.5 text-white font-medium text-sm md:text-base">
+                 关闭详情
+               </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Note modal */}
       {noteId && noteTodo && (
