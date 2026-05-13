@@ -21,6 +21,7 @@ export default function TodoApp() {
   const [noteId, setNoteId] = useState<string | null>(null);
   const [noteText, setNoteText] = useState("");
   const [detailId, setDetailId] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
   const [confetti, setConfetti] = useState<{ id: number; x: number; y: number }[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const editRef = useRef<HTMLInputElement>(null);
@@ -71,6 +72,32 @@ export default function TodoApp() {
     updateNote(noteId, noteText);
     setNoteId(null);
   }, [noteId, noteText, updateNote]);
+
+  const handleCopyNote = useCallback(async (text: string) => {
+    if (!text) return;
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        textArea.style.position = "absolute";
+        textArea.style.left = "-999999px";
+        document.body.appendChild(textArea);
+        textArea.select();
+        try {
+          document.execCommand("copy");
+        } catch (err) {
+          console.error("execCommand error", err);
+        }
+        textArea.remove();
+      }
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy text:", err);
+    }
+  }, []);
 
   const filtered = todos.filter(t => {
     if (filter === "active") return !t.completed;
@@ -393,7 +420,30 @@ export default function TodoApp() {
             </div>
 
             <div>
-              <div className="text-text-muted text-sm md:text-base mb-2">备注信息</div>
+              <div className="flex items-center gap-2 mb-2">
+                <div className="text-text-muted text-sm md:text-base">备注信息</div>
+                {detailTodo.note && (
+                  <button
+                    onClick={() => handleCopyNote(detailTodo.note)}
+                    className="p-1 rounded-md text-text-dim hover:text-accent hover:bg-accent-subtle transition-all flex items-center gap-1"
+                    title="复制备注"
+                  >
+                    {copied ? (
+                      <>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-green">
+                          <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        <span className="text-[11px] text-green font-medium">已复制</span>
+                      </>
+                    ) : (
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                      </svg>
+                    )}
+                  </button>
+                )}
+              </div>
               <div className="bg-surface rounded-xl p-4 md:p-5 border border-border min-h-[200px] whitespace-pre-wrap text-text leading-relaxed text-base">
                 {detailTodo.note ? detailTodo.note : <span className="text-text-dim italic">暂无备注内容...</span>}
               </div>
